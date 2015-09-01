@@ -1,1 +1,5 @@
 # List of files or directories to ignore
+.Rapp.history
+Janz_et_al_Supp_info_comp.pdf
+OH-reply-junk.R
+OH-reply-code (Autosaved).R
