@@ -51,6 +51,7 @@ rate.matrix <- TransMatMaker(hidden.states = TRUE)
 hidden.mono.matrix <- ParDrop(rate.matrix, c(2, 3, 5, 7, 8, 9, 10, 12))
 mono <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 2, 0, 3), eps.anc = c(1, 2, 0, 3), trans.rate = hidden.mono.matrix, output.type = "net.div", hidden.states = TRUE)
 # note the HiSSE model has "generalists" diverisifying faster
+# allow for a hidden state to affect 0A -> 0B in future models 
 
 mono.support <- SupportRegion(mono, n.point = 1e3)
 
@@ -80,10 +81,11 @@ hsim1 <- HiSSE.fit(N = 1e4, params = mono$solution[1:20], Ntax = 378, sims = 1e3
 hist(hsim1, col = "light grey", las = 1, breaks = 20)
 qhsim1 <- quantile(hsim1, probs = c(0.025, 0.975), type = 7)
 
-
+# pdf(file = "Images/K-comp1.pdf", bg = "white")
 hist(hsim1, xlim = c(0, 0.5), ylim = c(0, 2500), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 20)
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 hist(sim1, col = "light grey", las = 1, add = TRUE, breaks = 20)
 legend("topleft", legend = c("CLaSSE", "HiSSE"), col = c("light grey", "dark grey"), pch = 15, pt.cex = 2, bty = "n")
 # abline(v = qhsim1, lwd = 3, lty = 2, col = "dark grey")
 # abline(v = qsim1, lwd = 3, lty = 2, col = "light grey")
+# dev.off()
