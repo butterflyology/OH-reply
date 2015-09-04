@@ -7,13 +7,14 @@ setwd("~/Desktop/Projects/OH-reply")
 # load("Janz_Data/Evolution_RData.RData")
 
 # I have added objects to the data we will use here in addition to the data from Janz et al., the Nym.pruned phlyogenetic object, the Hosts data, the K.bi file so users can recreate the phylogenetic signal analysis, and bi.hisse have the host data coded as 0 for herbivores that feed on one family, and 1 for those feeding on more than 1. 
-# save(list = ls(), file = "OH-reply-data.RData")
-# load("OH-reply-data.RData")
 
 library("diversitree")
 library("phytools")
 library("hisse")
 (sessInf <- sessionInfo())
+
+# save(list = ls(), file = "OH-reply-data.RData")
+# load("OH-reply-data.RData")
 
 # We will simulate trees using the Janz et al. parameterization of the CLaSSE model, and then explore the phylogenetic signal present in those trees. 
 
@@ -96,7 +97,7 @@ His.mono$solution
 His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
 
 ##### Model comparison
-
+His.null$AIC
 His.full$AIC
 His.poly$AIC
 His.mono$AIC
