@@ -13,7 +13,7 @@ setwd("~/Desktop/Projects/OH-reply")
 library("diversitree")
 library("phytools")
 library("hisse")
-sessionInfo()
+(sessInf <- sessionInfo())
 
 # We will simulate trees using the Janz et al. parameterization of the CLaSSE model, and then explore the phylogenetic signal present in those trees. 
 
@@ -39,24 +39,77 @@ hist(sim1, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K", l
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 qsim1 <- quantile(sim1, probs = c(0.025, 0.975), type = 7)
 
+
+
 #####
-##### Simulating a HiSSE model in diversitree
+##### Run HiSSE models
 #####
-# Take HiSSE output and feed that into MuSSE
+
+# A null model:
 
 # Set up the transition rate matrix
 rate.matrix <- TransMatMaker(hidden.states = TRUE)
 
-# set up transition matrix that does not allow hidden state 0 (only hidden effects for state 1) 
-hidden.mono.matrix <- ParDrop(rate.matrix, c(2, 3, 5, 7, 8, 9, 10, 12))
-mono <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 2, 0, 3), eps.anc = c(1, 2, 0, 3), trans.rate = hidden.mono.matrix, output.type = "net.div", hidden.states = TRUE)
+# Change the transition rates for the full null model 
+H.null.full.matrix <- ParDrop(rate.matrix, drop.par = c(3, 5, 8, 10))
+# set all rates to equal
+H.null.all.equal <- H.null.full.matrix
+H.null.all.equal[!is.na(H.null.all.equal) & !H.null.all.equal == 0] <-  1
+H.null.all.equal
+#Now we want three specific rates, here are the steps to create a transition matrix with the three states we are interested in:
+H.null.three.rates <- H.null.full.matrix
+#Set all transitions from 0->1 to be governed by a single rate:
+to.change <- cbind(c(1, 3), c(2, 4))
+H.null.three.rates[to.change] <- 1
+#Now set all transitions from 1->0 to be governed by a single rate:
+to.change.2 <- cbind(c(2, 4), c(1, 3))
+H.null.three.rates[to.change.2] <- 2
+
+#Finally, set all transitions between the hidden state to be a single rate (essentially giving you an estimate of the rate by which shifts in diversification occur:
+to.change.3 <- cbind(c(1, 3, 2, 4), c(3, 1, 4, 2))
+H.null.three.rates[to.change.3] <- 3
+
+# the "null" model, where we assume character independence for rates
+His.null <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 1, 2, 2), eps.anc = c(1, 1, 2, 2), trans.rate = H.null.three.rates, output.type = "raw", hidden.states = TRUE)
+His.null.support <- SupportRegion(His.null, n.point = 1e3)
+
+
+##### Now a full hisee model
+His.full <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 2, 3, 4), eps.anc = c(1, 2, 3, 4), trans.rate = rate.matrix, output.type = "raw", hidden.states = TRUE)
+His.full$solution
+His.full <- SupportRegion(His.full, n.point = 1e3)
+
+
+# transition matrix that only allows hidden effects on polyphagous lineages (state 1) 
+His.poly.matrix <- ParDrop(rate.matrix, c(2, 3, 5, 7, 8, 9, 10, 12))
+His.poly <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 2, 0, 3), eps.anc = c(1, 2, 0, 3), trans.rate = His.poly.matrix, output.type = "raw", hidden.states = TRUE)
 # note the HiSSE model has "generalists" diverisifying faster
-# allow for a hidden state to affect 0A -> 0B in future models 
+His.poly$solution[1:20]
 
-mono.support <- SupportRegion(mono, n.point = 1e3)
+His.poly.support <- SupportRegion(His.poly, n.point = 1e3)
 
-mono$solution[1:20]
 
+# transition matrix that only allows hidden effects on monophagous lineages (state 0):
+His.mono.matrix <- ParDrop(rate.matrix, c(3, 6, 5, 8, 9, 10, 11, 12))
+His.mono <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 2, 0, 3), eps.anc = c(1, 2, 0, 3), trans.rate = His.mono.matrix, output.type = "raw", hidden.states = TRUE)
+His.mono$solution
+His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
+
+##### Model comparison
+
+His.full$AIC
+His.poly$AIC
+His.mono$AIC
+
+
+
+
+#####
+##### Simulating a HiSSE model in diversitree
+#####
+
+
+# Take HiSSE output and feed that into MuSSE
 
 
 HiSSE.fit <- function(N, params, Ntax, sims){
@@ -77,15 +130,23 @@ HiSSE.fit <- function(N, params, Ntax, sims){
 }
 
 
-hsim1 <- HiSSE.fit(N = 1e4, params = mono$solution[1:20], Ntax = 378, sims = 1e3 )
-hist(hsim1, col = "light grey", las = 1, breaks = 20)
+hsim1 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 378, sims = 1e3 )
+summary(hsim1)
+max(hsim1)
+
+
+hist(hsim1, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
+
 qhsim1 <- quantile(hsim1, probs = c(0.025, 0.975), type = 7)
 
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
-hist(hsim1, xlim = c(0, 0.5), ylim = c(0, 2500), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 20)
-abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
-hist(sim1, col = "light grey", las = 1, add = TRUE, breaks = 20)
-legend("topleft", legend = c("CLaSSE", "HiSSE"), col = c("light grey", "dark grey"), pch = 15, pt.cex = 2, bty = "n")
+hist(hsim1, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 1e4)
+abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
+hist(sim1, col = "black", las = 1, add = TRUE, breaks = 2e2)
+legend("topright", legend = c("CLaSSE", "HiSSE"), col = c("black", "dark grey"), pch = 15, pt.cex = 2, bty = "n")
 # abline(v = qhsim1, lwd = 3, lty = 2, col = "dark grey")
 # abline(v = qsim1, lwd = 3, lty = 2, col = "light grey")
 # dev.off()
+
+
+
