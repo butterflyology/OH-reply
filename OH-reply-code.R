@@ -78,7 +78,15 @@ His.null.support <- SupportRegion(His.null, n.point = 1e3)
 ##### Now a full hisee model
 His.full <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(1, 2, 3, 4), eps.anc = c(1, 2, 3, 4), trans.rate = rate.matrix, output.type = "raw", hidden.states = TRUE)
 His.full$solution
-His.full <- SupportRegion(His.full, n.point = 1e3)
+His.full.support <- SupportRegion(His.full, n.point = 1e3)
+
+# Calculate likeliest states for HTU and OTUs via marginal reconstruction
+
+His.full.recon <- MarginRecon(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), pars = His.full$solution, hidden.states = TRUE, four.state.null = FALSE, root.type = "madfitz", aic = His.full$AIC, n.cores = 6)
+
+# pdf(file = "Images/Hisse-full.pdf", bg = "white")
+His.plot <- plot.hisse.states(His.full.recon, rate.param = "speciation", type = "phylogram", show.tip.label = FALSE, legend = "tips", legend.position = c(0.01, 0.25, 0.8, 0.99), legend.cex = 0.6, edge.width.rate = 5, edge.width.state = 0.8)
+# dev.off()
 
 
 # transition matrix that only allows hidden effects on polyphagous lineages (state 1) 
@@ -141,12 +149,10 @@ hist(hsim1, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
 qhsim1 <- quantile(hsim1, probs = c(0.025, 0.975), type = 7)
 
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
-hist(hsim1, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 1e4)
+hist(hsim1, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
 abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
 hist(sim1, col = "black", las = 1, add = TRUE, breaks = 2e2)
-legend("topright", legend = c("CLaSSE", "HiSSE"), col = c("black", "dark grey"), pch = 15, pt.cex = 2, bty = "n")
-# abline(v = qhsim1, lwd = 3, lty = 2, col = "dark grey")
-# abline(v = qsim1, lwd = 3, lty = 2, col = "light grey")
+legend("topright", legend = c("CLaSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
 
 
