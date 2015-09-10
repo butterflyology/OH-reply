@@ -11,10 +11,17 @@ setwd("~/Desktop/Projects/OH-reply")
 library("diversitree")
 library("phytools")
 library("hisse")
-(sessInf <- sessionInfo())
 
 # save(list = ls(), file = "OH-reply-data.RData")
 # load("OH-reply-data.RData")
+
+(sessInf <- sessionInfo())
+
+##### The code and data herein are basically in two parts: 1) Analyzing CLaSSE as a good model and, 2) Let's see what HiSSE has to say
+
+#####
+##### CLaSSE
+#####
 
 # We will simulate trees using the Janz et al. parameterization of the CLaSSE model, and then explore the phylogenetic signal present in those trees. 
 
