@@ -111,22 +111,12 @@ His.mono <- hisse(Nym.pruned$phy, bi.hisse, f = c(0.88, 0.86), turnover.anc = c(
 His.mono$solution
 His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
 
-##### Model comparison
-His.null$AIC
-His.full$AIC
-His.poly$AIC
-His.mono$AIC
-
-
-
 
 #####
 ##### Simulating a HiSSE model in diversitree
 #####
 
-
 # Take HiSSE output and feed that into MuSSE
-
 
 HiSSE.fit <- function(N, params, Ntax, sims){
 	Sname <- numeric(length = N)
@@ -162,5 +152,68 @@ hist(sim1, col = "black", las = 1, add = TRUE, breaks = 2e2)
 legend("topright", legend = c("CLaSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
 
+
+#####
+##### AIC model weights
+#####
+
+# AIC weight
+aics <- data.frame(c("Full", "Null", "Poly", "Mono"), c(His.full$AIC, His.null$AIC, His.poly$AIC, His.mono$AIC), row.names = NULL)
+colnames(aics) <- c("model", "AIC")
+aics <- aics[order(aics$AIC), ]
+
+for(i in 1:dim(aics)[1]){ 
+aics$delta[i] <- aics$AIC[i] - aics$AIC[1]
+} 
+aics$W <- (exp(-0.5 * aics$delta) / sum(exp(-0.5 * aics$delta)))
+aics
+
+#####
+##### Investigate model adequacy
+#####
+
+# Let's make sure that tip states produced under simulation match up with what we observe. Here we simulate tip states under the Janz et al. parameterication of the CLaSSE model
+CLaSSE.count <- function(Nreps, params, Ntax){
+	Count <- numeric(length = Nreps)
+		for(i in 1:Nreps){
+			temp <- tree.classe(pars = params, max.taxa = Ntax)
+			Count[i] <- sum(temp$tip.state == 1)
+					cat("\n", i, "of", Nreps, "\n")
+		}
+		return(Count)
+}
+
+cc1 <- CLaSSE.count(Nreps = 1e4, params = fit1$par, Ntax = 378)
+quantile(cc1, probs = c(0.025, 0.975))
+sum(bi == 0)
+
+hist(cc1, col = "grey", las = 1, breaks = 40, xlim = c(0, 400), main = "", xlab = 'Simulated trait state "0"')
+abline(v = sum(bi == 0), lwd = 2)
+
+
+# Now we do the same thing with the full HiSSE model 
+HiSSE.counter <- function(Nreps, params, Ntax){
+	count <- numeric(length = Nreps)
+		for(i in 1:Nreps){
+			temp <- NULL
+			while(is.null(temp)){
+				temp <- tree.musse(pars = params, max.taxa = Ntax, x0 = 1, include.extinct = FALSE)
+				}
+		simu.dat <- data.frame(names(temp$tip.state), temp$tip.state)
+			simu.dat[simu.dat[, 2] == 3, 2] <- 1
+			simu.dat[simu.dat[, 2] == 4, 2] <- 2
+			simu.dat[, 2] <- simu.dat[, 2] - 1
+			count[i] <- sum(simu.dat$temp.tip.state == 0)
+			cat("\n", i, "of", Nreps, "\n")
+		}
+			return(count)
+}
+hc1 <- HiSSE.counter(Nreps = 1e4, params = His.full$solution[1:20], Ntax = 378)
+quantile(hc1, probs = c(0.025, 0.975)) # The observed value falls within the 95% quantile generated from the HiSSE model 
+sum(bi == 0)
+
+hist(hc1, las = 1, col = "grey", breaks = 60, xlim = c(0, 400), main = "", xlab = 'Simulated trait state "0"')
+abline(v = sum(bi == 0), lwd = 2)
+hist(cc1, col = "light grey", las = 1, breaks = 160, add = TRUE)
 
 
