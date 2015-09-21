@@ -17,35 +17,37 @@ library("hisse")
 
 (sessInf <- sessionInfo())
 
-##### The code and data herein are basically in two parts: 1) Analyzing CLaSSE as a good model and, 2) Let's see what HiSSE has to say
+##### The code and data herein are basically in two parts: 1) Analyzing ClaSSE as a good model and, 2) Let's see what HiSSE has to say
 
 #####
-##### CLaSSE
+##### ClaSSE
 #####
 
 # We will simulate trees using the Janz et al. parameterization of the CLaSSE model, and then explore the phylogenetic signal present in those trees. 
 
-# The maximum likelihood estimate from the ClaSSE model (Fig S1-A)
+# The maximum likelihood estimate from the ClaSSE model (Fig S1-A), the Count data also records tip states for specialists (which we will use later for model adequancy fun time)
 fit1$par
 
-retorted <- function(N, params, Ntax, sims){
+retorted <- function(N, params, Ntax, sims, state){
 	Sname <- numeric(length = N)
+	Count <- numeric(length = N)
 		for(i in 1:N){
-			temp <- tree.classe(pars = params, max.taxa = Ntax)
+			temp <- tree.classe(pars = params, max.taxa = Ntax, x0 = state)
+			Count[i] <- sum(temp$tip.state == 1)
 			Sname[i] <- phylosig(temp, temp$tip.state, method = "K", nsim = sims, test = FALSE)
-		cat("\n", i, "of", N, "\n")
-		}
-		return(Sname)
+			if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
+					}
+		return(list(K = Sname, Count = Count))
 }
 
-sim1 <- retorted(N = 1e4, params = fit1$par, Ntax = 378, sims = 1e3)
+sim1 <- retorted(N = 1e4, params = fit1$par, Ntax = 378, sims = 1e3, state = 2)
 
 # To refresh your recollection, the phlyogenetic signal estimated from the actual data was K = 0.481, P = 1e-4
 K.bi <- phylosig(Nym.pruned$phy, bi, method = "K", test = TRUE, nsim = 10000)
 
-hist(sim1, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal")
+hist(sim1$K, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal")
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
-qsim1 <- quantile(sim1, probs = c(0.025, 0.975), type = 7)
+qsim1 <- quantile(sim1$K, probs = c(0.025, 0.975), type = 7)
 
 
 
@@ -120,6 +122,7 @@ His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
 
 HiSSE.fit <- function(N, params, Ntax, sims){
 	Sname <- numeric(length = N)
+	Count <- numeric(length = N)
 		for(i in 1:N){
 			temp <- NULL
 			while(is.null(temp)){
@@ -129,26 +132,26 @@ HiSSE.fit <- function(N, params, Ntax, sims){
 			simu.dat[simu.dat[, 2] == 3, 2] <- 1
 			simu.dat[simu.dat[, 2] == 4, 2] <- 2
 			simu.dat[, 2] <- simu.dat[, 2] - 1
+			Count[i] <- sum(simu.dat$temp.tip.state == 0)
 			Sname[i] <- phylosig(temp, simu.dat$temp.tip.state, method = "K", test = FALSE, nsim = sims)
-		cat("\n", i, "of", N, "\n")
+		if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
 		}
-		return(Sname)
+		return(list(K = Sname, Count = Count))
 }
 
 
-hsim1 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 378, sims = 1e3 )
+hsim1 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 378, sims = 1e3)
 summary(hsim1)
-max(hsim1)
+max(hsim1$K)
 
+hist(hsim1$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
 
-hist(hsim1, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
-
-qhsim1 <- quantile(hsim1, probs = c(0.025, 0.975), type = 7)
+qhsim1 <- quantile(hsim1$K, probs = c(0.025, 0.975), type = 7)
 
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
-hist(hsim1, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
+hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
 abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
-hist(sim1, col = "black", las = 1, add = TRUE, breaks = 2e2)
+hist(sim1$K, col = "black", las = 1, add = TRUE, breaks = 2e2)
 legend("topright", legend = c("CLaSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
 
@@ -172,48 +175,24 @@ aics
 ##### Investigate model adequacy
 #####
 
-# Let's make sure that tip states produced under simulation match up with what we observe. Here we simulate tip states under the Janz et al. parameterication of the CLaSSE model
-CLaSSE.count <- function(Nreps, params, Ntax){
-	Count <- numeric(length = Nreps)
-		for(i in 1:Nreps){
-			temp <- tree.classe(pars = params, max.taxa = Ntax)
-			Count[i] <- sum(temp$tip.state == 1)
-					cat("\n", i, "of", Nreps, "\n")
-		}
-		return(Count)
-}
+# Let's make sure that tip states produced under simulation match up with what we observe. Here we simulate tip states under the Janz et al. parameterication of the ClaSSE model
 
-cc1 <- CLaSSE.count(Nreps = 1e4, params = fit1$par, Ntax = 378)
-quantile(cc1, probs = c(0.025, 0.975))
-sum(bi == 0)
+# simulate for state x0 = 1 to match HiSSE
 
-hist(cc1, col = "grey", las = 1, breaks = 40, xlim = c(0, 400), main = "", xlab = 'Simulated trait state "0"')
+quantile(sim1$Count, probs = c(0.025, 0.975))
+hist(sim1$Count, col = "grey", las = 1, breaks = 40, xlim = c(0, 400), main = "", xlab = 'Simulated trait state "1"')
 abline(v = sum(bi == 0), lwd = 2)
+
 
 
 # Now we do the same thing with the full HiSSE model 
-HiSSE.counter <- function(Nreps, params, Ntax){
-	count <- numeric(length = Nreps)
-		for(i in 1:Nreps){
-			temp <- NULL
-			while(is.null(temp)){
-				temp <- tree.musse(pars = params, max.taxa = Ntax, x0 = 1, include.extinct = FALSE)
-				}
-		simu.dat <- data.frame(names(temp$tip.state), temp$tip.state)
-			simu.dat[simu.dat[, 2] == 3, 2] <- 1
-			simu.dat[simu.dat[, 2] == 4, 2] <- 2
-			simu.dat[, 2] <- simu.dat[, 2] - 1
-			count[i] <- sum(simu.dat$temp.tip.state == 0)
-			cat("\n", i, "of", Nreps, "\n")
-		}
-			return(count)
-}
-hc1 <- HiSSE.counter(Nreps = 1e4, params = His.full$solution[1:20], Ntax = 378)
-quantile(hc1, probs = c(0.025, 0.975)) # The observed value falls within the 95% quantile generated from the HiSSE model 
+quantile(hsim1$Count, probs = c(0.025, 0.975)) # The observed value falls within the 95% quantile generated from the HiSSE model 
 sum(bi == 0)
 
-hist(hc1, las = 1, col = "grey", breaks = 60, xlim = c(0, 400), main = "", xlab = 'Simulated trait state "0"')
+# I feel that we can say that both ClaSSe and HiSSE simulate the correct number of each state. 
+# pdf(file = "Images/state-sim.pdf", bg = "white")
+hist(hsim1$Count, las = 1, col = "grey", breaks = 60, xlim = c(0, 400), main = "", xlab = "Simulated number of monophagous states")
 abline(v = sum(bi == 0), lwd = 2)
-hist(cc1, col = "light grey", las = 1, breaks = 160, add = TRUE)
-
+hist(sim1$Count, col = "light grey", las = 1, breaks = 160, add = TRUE)
+# dev.off()
 
