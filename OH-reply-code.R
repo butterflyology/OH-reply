@@ -152,7 +152,7 @@ qhsim1 <- quantile(hsim1$K, probs = c(0.025, 0.975), type = 7)
 hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
 abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
 hist(sim1$K, col = "black", las = 1, add = TRUE, breaks = 2e2)
-legend("topright", legend = c("CLaSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
+legend("topright", legend = c("ClaSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
 
 
@@ -192,7 +192,8 @@ sum(bi == 0)
 # I feel that we can say that both ClaSSe and HiSSE simulate the correct number of each state. 
 # pdf(file = "Images/state-sim.pdf", bg = "white")
 hist(hsim1$Count, las = 1, col = "grey", breaks = 60, xlim = c(0, 400), main = "", xlab = "Simulated number of monophagous states")
-abline(v = sum(bi == 0), lwd = 2)
+abline(v = sum(bi == 0), lwd = 2, lty = 2)
 hist(sim1$Count, col = "light grey", las = 1, breaks = 160, add = TRUE)
+legend("topright", legend = c("ClaSSE", "HiSSE", "Observed data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
 
