@@ -117,6 +117,8 @@ His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
 #####
 ##### Simulating a HiSSE model in diversitree
 #####
+library(ape)
+time.tree<-max(branching.times(Nym.pruned$phy))
 
 # Take HiSSE output and feed that into MuSSE
 
