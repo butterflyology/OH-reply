@@ -11,13 +11,53 @@ setwd("~/Desktop/Projects/OH-reply")
 library("diversitree")
 library("phytools")
 library("hisse")
+library("ape")
 
 # save(list = ls(), file = "OH-reply-data.RData")
 # load("OH-reply-data.RData")
 
 (sessInf <- sessionInfo())
 
-##### The code and data herein are basically in two parts: 1) Analyzing ClaSSE as a good model and, 2) Let's see what HiSSE has to say
+##### The code and data herein are basically in three parts: 1) Check our original BiSSE model, 2) Analyzing ClaSSE for model adequancy and, 3) Let's see what HiSSE has to say
+
+#####
+##### BiSSE
+#####
+
+Larry <- function(N, params, Ntax, Time, state, sims){
+	i <- 1
+	Count <- numeric(length = N)
+	Sname <- numeric(length = N)
+	Length <- numeric(length = N)
+	while (i <= N){
+		temp <- NULL
+		while(is.null(temp)){
+		temp <- tree.bisse(pars = params, max.taxa = Ntax, max.t = Time, x0 = state)}
+		if(length(temp$tip.state)>=100){
+	Count[i] <- sum(temp$tip.state == 0)
+	Length[i] <- length(temp$tip.state)
+	Sname[i] <- phylosig(temp, temp$tip.state, method = "K", nsim = sims, test = FALSE)
+		if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
+		i <- i + 1
+		}}
+		return(list(K = Sname, Count = Count, Length = Length))
+}
+
+
+tax.izzle <- Larry(N = 1e4, params = fit.bi.1a$par, Ntax = 378, Time = Inf, state = 1, sims = 1e3)
+
+hist(tax.izzle$K, col = "grey", breaks = 20, las = 1, main = "", xlab = "Simulated K values", xlim = c(0, 0.5))
+abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
+
+
+max.Nym <- max(branching.times(Nym.pruned$phy))
+
+time.izzle <- Larry(N = 1e4, params = fit.bi.1a$par, Ntax = Inf, Time = max.Nym, state = 1, sims = 1e3)
+
+length(bi[bi == 0]) / length(bi)
+hist(time.izzle$Count / time.izzle$Length, breaks = 20, col = "grey", las = 1, main = "", xlab = "Fraction specialist")
+abline(v = length(bi[bi == 0]) / length(bi), lwd = 2, lty = 2)
+
 
 #####
 ##### ClaSSE
@@ -28,27 +68,47 @@ library("hisse")
 # The maximum likelihood estimate from the ClaSSE model (Fig S1-A), the Count data also records tip states for specialists (which we will use later for model adequancy fun time)
 fit1$par
 
-retorted <- function(N, params, Ntax, sims, state){
-	Sname <- numeric(length = N)
+retorted <- function(N, params, Ntax, Time, state, sims){
+	i <- 1
 	Count <- numeric(length = N)
-		for(i in 1:N){
-			temp <- tree.classe(pars = params, max.taxa = Ntax, x0 = state)
-			Count[i] <- sum(temp$tip.state == 1)
-			Sname[i] <- phylosig(temp, temp$tip.state, method = "K", nsim = sims, test = FALSE)
-			if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
-					}
-		return(list(K = Sname, Count = Count))
+	Sname <- numeric(length = N)
+	Length <- numeric(length = N)
+	while (i <= N){
+		temp <- NULL
+		while(is.null(temp)){
+		temp <- tree.classe(pars = params, max.taxa = Ntax, max.t = Time, x0 = state)}
+		if(length(temp$tip.state) >= 100){
+	Count[i] <- sum(temp$tip.state == 1)
+	Length[i] <- length(temp$tip.state)
+	Sname[i] <- phylosig(temp, temp$tip.state, method = "K", nsim = sims, test = FALSE)
+		if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
+		i <- i + 1
+		}}
+		return(list(K = Sname, Count = Count, Length = Length))
 }
 
-sim1 <- retorted(N = 1e4, params = fit1$par, Ntax = 378, sims = 1e3, state = 2)
+sim1 <- retorted(N = 1e4, params = fit1$par, Ntax = 378, Time = Inf, sims = 1e3, state = 2)
+
+sim2 <- retorted(N = 1e4, params = fit1$par, Ntax = Inf, Time = max.Nym, sims = 1e3, state = 2)
 
 # To refresh your recollection, the phlyogenetic signal estimated from the actual data was K = 0.481, P = 1e-4
-K.bi <- phylosig(Nym.pruned$phy, bi, method = "K", test = TRUE, nsim = 10000)
+K.bi <- phylosig(Nym.pruned$phy, bi, method = "K", test = TRUE, nsim = 1e4)
+
+hist(sim1$Count / sim1$Length, breaks = 20, col = "grey", las = 1, main = "", xlab = "Fraction specialist")
+abline(v = length(bi[bi == 0]) / length(bi), lwd = 2, lty = 2)
+
 
 hist(sim1$K, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal")
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 qsim1 <- quantile(sim1$K, probs = c(0.025, 0.975), type = 7)
 
+hist(sim2$K, xlim = c(0, 0.5), ylim = c(0, 2000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 30)
+abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
+qsim2 <- quantile(sim2$K, probs = c(0.025, 0.975), type = 7)
+
+
+hist(sim2$Count / sim2$Length, breaks = 20, col = "grey", las = 1, main = "", xlab = "Fraction specialist")
+abline(v = length(bi[bi == 0]) / length(bi), lwd = 2, lty = 2)
 
 
 #####
@@ -120,14 +180,17 @@ His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
 
 # Take HiSSE output and feed that into MuSSE
 
-HiSSE.fit <- function(N, params, Ntax, sims){
+HiSSE.fit <- function(N, params, Ntax, Time, sims){
+	i <- 1
 	Sname <- numeric(length = N)
 	Count <- numeric(length = N)
-		for(i in 1:N){
+	Length <- numeric(length = N)
+		while(i <= N){
 			temp <- NULL
 			while(is.null(temp)){
-			temp <- tree.musse(pars = params, max.taxa = Ntax, x0 = 1, include.extinct = FALSE)
+			temp <- tree.musse(pars = params, max.taxa = Ntax, max.t = Time, x0 = 1, include.extinct = FALSE)
 			}
+			if(length(temp$tip.state) >= 100){
 			simu.dat <- data.frame(names(temp$tip.state), temp$tip.state)
 			simu.dat[simu.dat[, 2] == 3, 2] <- 1
 			simu.dat[simu.dat[, 2] == 4, 2] <- 2
@@ -135,14 +198,18 @@ HiSSE.fit <- function(N, params, Ntax, sims){
 			Count[i] <- sum(simu.dat$temp.tip.state == 0)
 			Sname[i] <- phylosig(temp, simu.dat$temp.tip.state, method = "K", test = FALSE, nsim = sims)
 		if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
-		}
-		return(list(K = Sname, Count = Count))
+		i <- i + 1
+		}}
+		return(list(K = Sname, Count = Count, Length = Length))
 }
 
-
-hsim1 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 378, sims = 1e3)
+hsim1 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 378, Time = Inf, sims = 1e3)
 summary(hsim1)
 max(hsim1$K)
+
+hsim2 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = Inf, Time = max.Nym, sims = 1e3)
+
+
 
 hist(hsim1$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
 
@@ -161,7 +228,7 @@ legend("topright", legend = c("ClaSSE", "HiSSE", "K from data"), col = c("black"
 #####
 
 # AIC weight
-aics <- data.frame(c("Full", "Null", "Poly", "Mono"), c(His.full$AIC, His.null$AIC, His.poly$AIC, His.mono$AIC), row.names = NULL)
+aics <- data.frame(c("Full", "Null", "Poly", "Mono", "ClaSSE"), c(His.full$AIC, His.null$AIC, His.poly$AIC, His.mono$AIC, AIC(fit1)), row.names = NULL)
 colnames(aics) <- c("model", "AIC")
 aics <- aics[order(aics$AIC), ]
 
