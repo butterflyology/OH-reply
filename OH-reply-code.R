@@ -101,6 +101,8 @@ abline(v = length(bi[bi == 0]) / length(bi), lwd = 2, lty = 2)
 hist(sim1$K, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal")
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 qsim1 <- quantile(sim1$K, probs = c(0.025, 0.975), type = 7)
+hist(tax.izzle$K, col = "light grey", breaks = 20, add = TRUE) # Note that both SSE models generate the same low phylogenetic signal.
+
 
 hist(sim2$K, xlim = c(0, 0.5), ylim = c(0, 2000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 30)
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
@@ -177,7 +179,7 @@ His.mono.support <- SupportRegion(His.mono, n.point = 1e3) # this fails
 #####
 ##### Simulating a HiSSE model in diversitree
 #####
-library(ape)
+
 time.tree<-max(branching.times(Nym.pruned$phy))
 
 # Take HiSSE output and feed that into MuSSE
@@ -221,7 +223,8 @@ qhsim1 <- quantile(hsim1$K, probs = c(0.025, 0.975), type = 7)
 hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
 abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
 hist(sim1$K, col = "black", las = 1, add = TRUE, breaks = 2e2)
-legend("topright", legend = c("ClaSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
+hist(tax.izzle$K, col = "black", breaks = 1e3, add = TRUE)
+legend("topright", legend = c("ClaSSE / BiSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
 
 
