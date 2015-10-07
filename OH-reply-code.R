@@ -186,38 +186,47 @@ time.tree<-max(branching.times(Nym.pruned$phy))
 
 HiSSE.fit <- function(N, params, Ntax, Time, sims){
 	i <- 1
+	counter<-0
 	Sname <- numeric(length = N)
 	Count <- numeric(length = N)
-	Length <- numeric(length = N)
+	gams <- numeric(length = N)
+	TreeSize <- numeric(length = N)
 		while(i <= N){
 			temp <- NULL
 			while(is.null(temp)){
-			temp <- tree.musse(pars = params, max.taxa = Ntax, max.t = Time, x0 = 1, include.extinct = FALSE)
+			temp <- tree.musse(pars = params, max.taxa = Ntax, max.t = Time, x0 = 1, include.extinct = FALSE);temp
+			counter <- counter + 1
+						 #cat("\ncounter on",counter)
 			}
-			if(length(temp$tip.state) >= 100){
+			if(length(temp$tip.state) >= 100 & length(temp$tip.state) < Ntax){
 			simu.dat <- data.frame(names(temp$tip.state), temp$tip.state)
 			simu.dat[simu.dat[, 2] == 3, 2] <- 1
 			simu.dat[simu.dat[, 2] == 4, 2] <- 2
 			simu.dat[, 2] <- simu.dat[, 2] - 1
 			Count[i] <- sum(simu.dat$temp.tip.state == 0)
+			gams[i] <- gammaStat(temp)
+			TreeSize[i] <- length(simu.dat$temp.tip.state)
 			Sname[i] <- phylosig(temp, simu.dat$temp.tip.state, method = "K", test = FALSE, nsim = sims)
 		if(i %% 50 == 0){ cat("\n", i, "of", N, "\n")}
 		i <- i + 1
 		}}
-		return(list(K = Sname, Count = Count, Length = Length))
+		return(list(gams = gams, K = Sname, Count = Count, TreeSize = TreeSize, counter = counter))
 }
 
 hsim1 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 378, Time = Inf, sims = 1e3)
 summary(hsim1)
 max(hsim1$K)
-
-hsim2 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = Inf, Time = max.Nym, sims = 1e3)
-
-
-
 hist(hsim1$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
-
 qhsim1 <- quantile(hsim1$K, probs = c(0.025, 0.975), type = 7)
+
+
+hsim2 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 400, Time = max.Nym, sims = 1e3)
+
+hist(hsim2$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
+summary(hsim2)
+hist(hsim2$Count / hsim2$TreeSize, col = "light grey", las = 1, breaks = 20, xlab = )
+qhsim2 <- quantile(c(hsim2$Count / hsim2$TreeSize))
+mean(hsim2$Count / hsim2$TreeSize)
 
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
 hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
