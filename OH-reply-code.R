@@ -50,15 +50,6 @@ hist(tax.izzle$K, col = "grey", breaks = 20, las = 1, main = "", xlab = "Simulat
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 
 
-max.Nym <- max(branching.times(Nym.pruned$phy))
-
-time.izzle <- Larry(N = 1e4, params = fit.bi.1a$par, Ntax = Inf, Time = max.Nym, state = 1, sims = 1e3)
-
-length(bi[bi == 0]) / length(bi)
-hist(time.izzle$Count / time.izzle$Length, breaks = 20, col = "grey", las = 1, main = "", xlab = "Fraction specialist")
-abline(v = length(bi[bi == 0]) / length(bi), lwd = 2, lty = 2)
-
-
 #####
 ##### ClaSSE
 #####
@@ -89,8 +80,6 @@ retorted <- function(N, params, Ntax, Time, state, sims){
 
 sim1 <- retorted(N = 1e4, params = fit1$par, Ntax = 378, Time = Inf, sims = 1e3, state = 2)
 
-sim2 <- retorted(N = 1e4, params = fit1$par, Ntax = Inf, Time = max.Nym, sims = 1e3, state = 2)
-
 # To refresh your recollection, the phlyogenetic signal estimated from the actual data was K = 0.481, P = 1e-4
 K.bi <- phylosig(Nym.pruned$phy, bi, method = "K", test = TRUE, nsim = 1e4)
 
@@ -102,15 +91,6 @@ hist(sim1$K, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K",
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 qsim1 <- quantile(sim1$K, probs = c(0.025, 0.975), type = 7)
 hist(tax.izzle$K, col = "light grey", breaks = 20, add = TRUE) # Note that both SSE models generate the same low phylogenetic signal.
-
-
-hist(sim2$K, xlim = c(0, 0.5), ylim = c(0, 2000), col = "dark grey", xlab = "K", las = 1, main = "Simulated phylogenetic signal", breaks = 30)
-abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
-qsim2 <- quantile(sim2$K, probs = c(0.025, 0.975), type = 7)
-
-
-hist(sim2$Count / sim2$Length, breaks = 20, col = "grey", las = 1, main = "", xlab = "Fraction specialist")
-abline(v = length(bi[bi == 0]) / length(bi), lwd = 2, lty = 2)
 
 
 #####
@@ -219,15 +199,6 @@ max(hsim1$K)
 hist(hsim1$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
 qhsim1 <- quantile(hsim1$K, probs = c(0.025, 0.975), type = 7)
 
-
-hsim2 <- HiSSE.fit(N = 1e4, params = His.full$solution[1:20], Ntax = 400, Time = max.Nym, sims = 1e3)
-
-hist(hsim2$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
-summary(hsim2)
-hist(hsim2$Count / hsim2$TreeSize, col = "light grey", las = 1, breaks = 20, xlab = )
-qhsim2 <- quantile(c(hsim2$Count / hsim2$TreeSize))
-mean(hsim2$Count / hsim2$TreeSize)
-
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
 hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
 abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
@@ -242,7 +213,7 @@ legend("topright", legend = c("ClaSSE / BiSSE", "HiSSE", "K from data"), col = c
 #####
 
 # AIC weight
-aics <- data.frame(c("Full", "Null", "Poly", "Mono", "ClaSSE"), c(His.full$AIC, His.null$AIC, His.poly$AIC, His.mono$AIC, AIC(fit1)), row.names = NULL)
+aics <- data.frame(c("Full", "Null", "Poly", "Mono", "BiSSE", "ClaSSE"), c(His.full$AIC, His.null$AIC, His.poly$AIC, His.mono$AIC, AIC(fit.bi.1a),(AIC(fit1)), row.names = NULL))
 colnames(aics) <- c("model", "AIC")
 aics <- aics[order(aics$AIC), ]
 
