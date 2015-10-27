@@ -12,6 +12,7 @@ library("diversitree")
 library("phytools")
 library("hisse")
 library("ape")
+library("coda")
 
 # save(list = ls(), file = "OH-reply-data.RData")
 # load("OH-reply-data.RData")
@@ -91,6 +92,9 @@ hist(sim1$K, xlim = c(0, 0.5), ylim = c(0, 3000), col = "dark grey", xlab = "K",
 abline(v = K.bi$K, col = "red", lwd = 3, lty =2)
 qsim1 <- quantile(sim1$K, probs = c(0.025, 0.975), type = 7)
 hist(tax.izzle$K, col = "light grey", breaks = 20, add = TRUE) # Note that both SSE models generate the same low phylogenetic signal.
+
+qsimB <- as.mcmc(sim1$K)
+qsimhHPD <- HPDinterval(qsimB)
 
 
 #####
@@ -198,6 +202,9 @@ summary(hsim1)
 max(hsim1$K)
 hist(hsim1$K, col = "light grey", las = 1, xlim = c(0, 2), breaks = 1e4)
 qhsim1 <- quantile(hsim1$K, probs = c(0.025, 0.975), type = 7)
+qhsimB <- as.mcmc(hsim1$K)
+qhsimhHPD <- HPDinterval(qhsimB)
+
 
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
 hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
