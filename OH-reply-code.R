@@ -13,6 +13,8 @@ library("phytools")
 library("hisse")
 library("ape")
 library("coda")
+library("BAMMtools")
+library("parallel")
 
 # save(list = ls(), file = "OH-reply-data.RData")
 # load("OH-reply-data.RData")
@@ -255,4 +257,19 @@ abline(v = sum(bi == 0), lwd = 2, lty = 2)
 hist(sim1$Count, col = "light grey", las = 1, breaks = 160, add = TRUE)
 legend("topright", legend = c("ClaSSE", "HiSSE", "Observed data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
+
+
+#####
+##### Trait dependent BAMM analsysis (STRAPP)
+#####
+
+event_data <- read.table("event_data.txt", sep = ",", header = TRUE)
+dim(event_data)
+head(event_data)
+
+ev1 <- getEventData(Nym.pruned$phy, eventdata = event_data, burnin = 0.1, type = "diversification")
+
+strap1 <- traitDependentBAMM(ephy = ev1, traits = bi, reps = 1e5, rate = "net diversification", return.full = TRUE, method = "mann-whitney", two.tailed = TRUE, logrates = FALSE, nthreads = 4) # switching traitorder makes no difference
+str(strap1)
+
 
