@@ -269,7 +269,7 @@ head(event_data)
 
 ev1 <- getEventData(Nym.pruned$phy, eventdata = event_data, burnin = 0.1, type = "diversification")
 
-strap1 <- traitDependentBAMM(ephy = ev1, traits = bi, reps = 1e4, rate = "net diversification", return.full = TRUE, method = "mann-whitney", two.tailed = TRUE, logrates = FALSE, nthreads = 4) # switching traitorder makes no difference
-str(strap1)
+strap1 <- traitDependentBAMM(ephy = ev1, traits = bi, reps = 1e4, rate = "net diversification", return.full = TRUE, method = "mann-whitney", two.tailed = TRUE, logrates = FALSE, nthreads = 4) 
+str(strap1) # any difference in diversification rate is not correlated with character state. 
 
 
