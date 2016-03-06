@@ -209,9 +209,9 @@ qhsimhHPD <- HPDinterval(qhsimB)
 
 
 # pdf(file = "Images/K-comp1.pdf", bg = "white")
-hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 300), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
+hist(hsim1$K, xlim = c(0, 2), ylim = c(0, 250), col = "dark grey", xlab = "K", las = 1, main = "", breaks = 1e4)
 abline(v = K.bi$K, col = "black", lwd = 3, lty =2)
-hist(sim1$K, col = "black", las = 1, add = TRUE, breaks = 2e2)
+hist(sim1$K, col = "black", las = 1, add = TRUE, breaks = 2e2)x
 hist(tax.izzle$K, col = "black", breaks = 1e3, add = TRUE)
 legend("topright", legend = c("ClaSSE / BiSSE", "HiSSE", "K from data"), col = c("black", "dark grey", "black"), pch = c(15, 15, NA), lty = c(NA, NA, 2), lwd = c(NA, NA, 3), pt.cex = 2, bty = "n")
 # dev.off()
