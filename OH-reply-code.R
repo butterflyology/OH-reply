@@ -6,7 +6,7 @@ setwd("~/Desktop/Projects/OH-reply")
 # load in the data provided by Janz et al. 
 # load("Janz_Data/Evolution_RData.RData")
 
-# I have added objects to the data we will use here in addition to the data from Janz et al., the Nym.pruned phlyogenetic object, the Hosts data, the K.bi file so users can recreate the phylogenetic signal analysis, and bi.hisse have the host data coded as 0 for herbivores that feed on one family, and 1 for those feeding on more than 1. 
+# I have added objects to the data we will use here in addition to the data from Janz et al., the Nym.pruned phlyogenetic object, the Hosts data, the K.bi file so users can recreate the phylogenetic signal analysis, and bi.hisse have the host data coded as 0 for herbivores that feed on one family, and 1 for those feeding on more than 1. Please note, the Janz et al. version of code which I was supplied with requires a few changes to work correctly. The user will have to adjust the sampling proprotions to properly reflect the number of generalists and specialists represented in the data as the definition of specialist is broadened (objects p2 - p4). By having the sampling proportion remain constant the AIC values are held artificially low. This only effects the supplemental material from Janz et al. and does not effect their main result, but it is important to note. 
 
 library("diversitree")
 library("phytools")
